@@ -51,6 +51,7 @@ function create() {
   player.setBounce(0.2); // little bounce animation
   player.setCollideWorldBounds(true);
 
+  // create the player animations ('running')
   this.anims.create({
     key: 'left',
     frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3}),
@@ -85,14 +86,15 @@ function create() {
     child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
   });
 
+  // make sure stars collide with platforms
   this.physics.add.collider(stars, platforms);
 
-  // player collect stars
+  // enable player to collect stars
   this.physics.add.overlap(player, stars, collectStar, null, this);
 
   // scoring
   scoreText = this.add.text(16, 16, `Score: ${score}`, { fontSize: '32px',
-                                                  fill: '#000' });
+                                                         fill: '#000' });
 
   // bombs
   bombs = this.physics.add.group();
@@ -101,41 +103,49 @@ function create() {
 }
 
 function update() {
+  // add keyboard input
   let cursors = this.input.keyboard.createCursorKeys();
 
-  if (cursors.left.isDown) {
+  if (cursors.left.isDown) { // go left
     player.setVelocityX(-160);
     player.anims.play('left', true);
-  } else if (cursors.right.isDown) {
+  } else if (cursors.right.isDown) { // go right
     player.setVelocityX(160);
     player.anims.play('right', true);
-  } else {
+  } else { // do nothing
     player.setVelocityX(0);
     player.anims.play('turn');
   }
 
+  // jumping
   if (cursors.up.isDown && player.body.touching.down) {
     player.setVelocityY(-330);
   }
 }
 
 function collectStar(player, star) {
+  // hide the star when it's collected
   star.disableBody(true, true);
+
+  // update the score
   score += 10;
   scoreText.setText(`Score: ${score}`);
 
-  // bomb things
-  if (stars.countActive(true) === 0) {
+  // bomb things...
+  if (stars.countActive(true) === 0) { // if there are no stars left
     stars.children.iterate(child => {
+      // reset all the stars
       child.enableBody(true, child.x, 0, true, true);
     });
 
+    // determine whether the player is on the left or right of the screen
     let x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
 
+    // add bomb to opposite side of the screen
     let bomb = bombs.create(x, 16, 'bomb');
-    bomb.setBounce(1); // make bomb bounce around screen indefinitely
-    bomb.setCollideWorldBounds(true);
-    bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+    bomb.setBounce(1); // makes bomb bounce around screen indefinitely
+    bomb.setCollideWorldBounds(true); // ensure bomb stays in the scene
+    bomb.setVelocity(Phaser.Math.Between(-200, 200), 20); // set it's speed
   }
 }
 
